@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 from ebooklib import epub
+import unicodedata
 
 def test2(url):
     response = requests.get(url)
@@ -46,8 +47,9 @@ def exportEpub(txt):
     book.spine = ['nav', c1]
 
     # write to the file
-    epub.write_epub('test1.epub', book, {})
+    epub.write_epub('test_encoder.epub', book, {})
 
 if __name__=='__main__':
     txt = test2('https://tw.aixdzs.com/read/166/166552/p1.html')
-    exportEpub(txt)
+    # print(str(txt))
+    exportEpub(str(txt))
