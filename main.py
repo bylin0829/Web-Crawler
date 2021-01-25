@@ -9,7 +9,7 @@ class HtmlParser:
         self.soup = BeautifulSoup(response.text, "html.parser")
     
     def get_title(self):
-        x = self.soup.find("h1")
+        x = self.soup.find("h1").get_text()
         return str(x)
 
     def get_author(self):
