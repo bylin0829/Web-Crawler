@@ -13,7 +13,7 @@ class HtmlParser:
         return str(x)
 
     def get_author(self):
-        x = self.soup.find("h2").find("span")
+        x = self.soup.find("h2").find("span").get_text()
         return str(x)
 
     def get_content(self):
