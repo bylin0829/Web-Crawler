@@ -44,12 +44,14 @@ class Epub:
 
         # add chapter
         self.book.add_item(c1)
-
+        c2 = epub.EpubHtml(title='介紹一下2', file_name='chap_02.xhtml', lang='hr')
+        c2.content = 'Hello world!'
+        self.book.add_item(c2)
         # define Table Of Contents
-        self.book.toc = (epub.Link('chap_01.xhtml', 'Introduction', 'intro'),
-                    (epub.Section('Simple book'),
-                    (c1, ))
-                    )
+        # self.book.toc = (epub.Link('chap_01.xhtml', 'Introduction', 'intro'),
+        #             (epub.Section('Simple book'),
+        #             (c1, ))
+        #             )
 
         # add default NCX and Nav file
         self.book.add_item(epub.EpubNcx())
