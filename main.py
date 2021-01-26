@@ -42,15 +42,18 @@ class Epub:
         self.book.add_item(self.c1)
         self.c2 = epub.EpubHtml(title='介紹一下2', file_name='chap_02.xhtml', lang='hr')        
         self.c2.content='Hello!'
-
-        # add chapter
         self.book.add_item(self.c2)
+
         # define Table Of Contents
         self.book.toc = (epub.Link('chap_01.xhtml', 'Introduction', 'intro'),
                     (epub.Section('Simple book'),
-                    (self.c1, self.c2, ))
+                    (self.c1, ))
                     )
-
+        self.book.toc = (epub.Link('chap_02.xhtml', 'Introduction', 'intro'),
+                    (epub.Section('Simple book'),
+                    (self.c2, ))
+                    )
+                    
     def export_epub(self, book_name=None):
         # set metadata
 
