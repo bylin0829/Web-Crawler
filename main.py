@@ -31,25 +31,30 @@ class Epub:
         self.book.set_title(self.title)
         self.book.set_language('en')
         self.book.add_author(self.author)
-
-    def export_epub(self, content):
-        # set metadata
-
-        # self.book.add_author('Danko Bananko', file_as='Gospodin Danko Bananko', role='ill', uid='coauthor')
-
+    
+    def add_chapter(self, content):
         # create chapter
-        c1 = epub.EpubHtml(title='介紹一下', file_name='chap_01.xhtml', lang='hr')
         self.content = content
-        c1.content=self.content
+        self.c1 = epub.EpubHtml(title='介紹一下', file_name='chap_01.xhtml', lang='hr')        
+        self.c1.content=self.content
 
         # add chapter
-        self.book.add_item(c1)
+        self.book.add_item(self.c1)
+        self.c2 = epub.EpubHtml(title='介紹一下2', file_name='chap_02.xhtml', lang='hr')        
+        self.c2.content='Hello!'
 
+        # add chapter
+        self.book.add_item(self.c2)
         # define Table Of Contents
         self.book.toc = (epub.Link('chap_01.xhtml', 'Introduction', 'intro'),
                     (epub.Section('Simple book'),
-                    (c1, ))
+                    (self.c1, self.c2, ))
                     )
+
+    def export_epub(self, book_name=None):
+        # set metadata
+
+        # self.book.add_author('Danko Bananko', file_as='Gospodin Danko Bananko', role='ill', uid='coauthor')
 
         # add default NCX and Nav file
         self.book.add_item(epub.EpubNcx())
@@ -63,10 +68,10 @@ class Epub:
         self.book.add_item(nav_css)
 
         # basic spine
-        self.book.spine = ['nav', c1]
+        self.book.spine = ['nav', self.c1]
 
         # write to the file
-        epub.write_epub('test_encoder.epub', self.book, {})
+        epub.write_epub(book_name+'.epub', self.book, {})
 
 if __name__=='__main__':
     url = 'https://tw.aixdzs.com/read/271/271523/p42.html'
@@ -76,5 +81,6 @@ if __name__=='__main__':
     # print(x.get_author())
     # print(x.get_title())
     # print(x.get_content())
-    y.export_epub(content)
+    y.add_chapter(content)
+    y.export_epub('test0127')
     # exportEpub(str(txt))
