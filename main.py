@@ -21,37 +21,35 @@ class HtmlParser:
         return str(x)
 
 class Epub:
-    def __init__(self, title, author, content, identifier):
+    def __init__(self, title, author, identifier):
         self.title = title
         self.author = author
-        self.content = content
         self.identifier = identifier
         self.book = epub.EpubBook()
 
-    def export_epub(self):
-        # set metadata
         self.book.set_identifier(self.identifier)
         self.book.set_title(self.title)
         self.book.set_language('en')
-
         self.book.add_author(self.author)
-        self.book.add_author('Danko Bananko', file_as='Gospodin Danko Bananko', role='ill', uid='coauthor')
+
+    def export_epub(self, content):
+        # set metadata
+
+        # self.book.add_author('Danko Bananko', file_as='Gospodin Danko Bananko', role='ill', uid='coauthor')
 
         # create chapter
         c1 = epub.EpubHtml(title='介紹一下', file_name='chap_01.xhtml', lang='hr')
-        # c1.content=u'<h1>Hi Chloe!</h1><p>要不要一起去看五月天?</p>'
+        self.content = content
         c1.content=self.content
 
         # add chapter
         self.book.add_item(c1)
-        c2 = epub.EpubHtml(title='介紹一下2', file_name='chap_02.xhtml', lang='hr')
-        c2.content = 'Hello world!'
-        self.book.add_item(c2)
+
         # define Table Of Contents
-        # self.book.toc = (epub.Link('chap_01.xhtml', 'Introduction', 'intro'),
-        #             (epub.Section('Simple book'),
-        #             (c1, ))
-        #             )
+        self.book.toc = (epub.Link('chap_01.xhtml', 'Introduction', 'intro'),
+                    (epub.Section('Simple book'),
+                    (c1, ))
+                    )
 
         # add default NCX and Nav file
         self.book.add_item(epub.EpubNcx())
@@ -73,9 +71,10 @@ class Epub:
 if __name__=='__main__':
     url = 'https://tw.aixdzs.com/read/271/271523/p42.html'
     x = HtmlParser(url)
-    y = Epub(title=x.get_title(), author=x.get_author(), content=x.get_content(), identifier='id123456')
+    y = Epub(title=x.get_title(), author=x.get_author(), identifier='id123456')
+    content=x.get_content()
     # print(x.get_author())
     # print(x.get_title())
     # print(x.get_content())
-    y.export_epub()
+    y.export_epub(content)
     # exportEpub(str(txt))
