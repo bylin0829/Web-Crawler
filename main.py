@@ -7,7 +7,11 @@ class HtmlParser:
     def __init__(self, url):
         response = requests.get(url)
         self.soup = BeautifulSoup(response.text, "html.parser")
-    
+        if url[-1] == '/':
+            self.url = url
+        else:
+            self.url = url+'/'
+
     def get_title(self):
         x = self.soup.find("h1").get_text()
         return str(x)
@@ -16,9 +20,18 @@ class HtmlParser:
         x = self.soup.find("h2").find("span").get_text()
         return str(x)
 
-    def get_content(self):
+    def get_content(self, suburl):
         x = self.soup.find("div", class_="content")
         return str(x)
+    
+    def get_all_chapter(self):
+        result = []
+        for x in self.soup.find_all("li", class_="chapter", ):
+            temp = []
+            temp.append(self.url+x.find("a").get("href"))
+            temp.append(x.find("a").get_text())
+            result.append(temp)
+        return result
 
 class Epub:
     def __init__(self, title, author, identifier):
@@ -71,13 +84,11 @@ class Epub:
         epub.write_epub(book_name+'.epub', self.book)
 
 if __name__=='__main__':
-    url = 'https://tw.aixdzs.com/read/271/271523/p42.html'
+    url = 'https://tw.aixdzs.com/read/271/271523/'
     x = HtmlParser(url)
-    y = Epub(title=x.get_title(), author=x.get_author(), identifier='id123456')
-    content=x.get_content()
+    # y = Epub(title=x.get_title(), author=x.get_author(), identifier='id123456')
+    # content=x.get_content()
+    # y.add_chapter(content)
+    # y.export_epub('test0127')
+    print(x.get_all_chapter())
     # print(x.get_author())
-    # print(x.get_title())
-    # print(x.get_content())
-    y.add_chapter(content)
-    y.export_epub('test0127')
-    # exportEpub(str(txt))
