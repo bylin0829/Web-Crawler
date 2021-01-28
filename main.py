@@ -53,8 +53,6 @@ class Epub:
     def export_epub(self, book_name=None):
         # set metadata
 
-        # self.book.add_author('Danko Bananko', file_as='Gospodin Danko Bananko', role='ill', uid='coauthor')
-
         # add default NCX and Nav file
         self.book.add_item(epub.EpubNcx())
         self.book.add_item(epub.EpubNav())
@@ -67,10 +65,10 @@ class Epub:
         self.book.add_item(nav_css)
 
         # basic spine
-        self.book.spine = ['nav', self.c1]
+        self.book.spine = ['nav', self.c1, self.c2]
 
         # write to the file
-        epub.write_epub(book_name+'.epub', self.book, {})
+        epub.write_epub(book_name+'.epub', self.book)
 
 if __name__=='__main__':
     url = 'https://tw.aixdzs.com/read/271/271523/p42.html'
