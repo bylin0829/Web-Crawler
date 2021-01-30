@@ -31,6 +31,7 @@ class HtmlParser:
         # for i in self.soup.find_all():
 
     def get_intro(self):
+        #
         response = requests.get(self.url_src)
         subweb = BeautifulSoup(response.text, "html.parser")
         x = subweb.find("div", class_="d_co")
