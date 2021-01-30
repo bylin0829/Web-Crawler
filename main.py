@@ -13,43 +13,40 @@ class HtmlParser:
         self.url_chapter = self.url_src.replace('/d/', '/read/')
 
     def get_title(self):
-        x = self.soup.find("h1").get_text()
-        return str(x)
+        title = self.soup.title.get_text()
+        x = title.find('txt')
+        if x == -1:
+            x = 0
+        return str(title[:x])
 
     def get_author(self):
-        x = self.soup.find("h2").find("span").get_text()
-        return str(x)
-    
-    def get_test(self):
         x = self.soup.find_all('span')
         for index, i in enumerate(x):
-            print(index)
             if str(i.get_text()).find('作者')>-1 and str(x[index+1].get_text()).find('分類')>-1:
-                print('got it in index='+str(index))
-                break
-
-        # for i in self.soup.find_all():
+                return i.next_element.next_element.get_text()
+        return '無作者資料'
 
     def get_intro(self):
-        #
         response = requests.get(self.url_src)
         subweb = BeautifulSoup(response.text, "html.parser")
-        x = subweb.find("div", class_="d_co")
+        x = subweb.find("div", class_="d_co").get_text()
         return str(x)
 
     def get_chapter_info(self, count=10):
         self.chapter_info_list = []
-        for x in self.soup.find_all("li", class_="chapter", ):
+        response = requests.get(self.url_chapter)
+        soup = BeautifulSoup(response.text, "html.parser")
+        for x in soup.find_all("li", class_="chapter", ):
             if count > 0:
                 count -= 1
                 temp = []
-                temp.append(self.url_chapter+x.find("a").get("href"))
-                temp.append(x.find("a").get_text())
+                temp.append(x.find("a").get_text()) # get all of chapter name
                 response = requests.get(self.url_chapter+x.find("a").get("href"))
                 subweb = BeautifulSoup(response.text, "html.parser")
-                temp.append(subweb.find("div", class_="content"))
-                self.chapter_info_list.append(temp)
-        return self.chapter_info_list
+                temp.append(subweb.find("div", class_="content")) # get all of content
+                temp.append(self.url_chapter+x.find("a").get("href")) # get all of links
+                self.chapter_info_list.append(temp) # collect all of information into list
+        return self.chapter_info_list #[title, content, url]
 
 class Epub:
     def __init__(self, title, author, identifier):
@@ -66,12 +63,8 @@ class Epub:
         self.book.set_language('en')
         self.book.add_author(self.author)
     
-    # def add_intro(self):
-    #     self.url
-
     def add_chapter(self, chapter_title='Untitled', content='Content is empty', epub_url=''):
         # create chapter
-        # c1 = epub.EpubHtml(title='介紹一下', file_name='chap_01.xhtml')    
         x = len(epub_url)
         if x <= 6:
             epub_url += '.xhtml'
@@ -80,15 +73,12 @@ class Epub:
                 epub_url += '.xhtml'
         c1 = epub.EpubHtml(title=chapter_title, file_name=epub_url)
         c1.content = content
-        print('file_name:' + epub_url)
         return c1
 
-    def create_toc(self, subtitle, chapterinfo):
-        self.subtitle = subtitle
+    def create_toc(self, chapterinfo):
         self.chapterinfo = chapterinfo
-        for i in chapterinfo:
+        for i in self.chapterinfo:
             self.book.add_item(i)
-        # self.book.add_item(self.c2)
         # define Table Of Contents
         self.book.toc = (epub.Link('introduction.xhtml', '介紹', 'intro'),
                             (epub.Section('本文'),
@@ -113,23 +103,29 @@ class Epub:
         self.book.spine = ['nav'] + self.chapterinfo
 
         # write to the file
-        epub.write_epub(book_name+'.epub', self.book)
+        print(book_name+'.epub')
+        print(self.book.toc[0])
+        # epub.write_epub(book_name+'.epub', self.book)
 
 if __name__=='__main__':
     url_src = 'https://tw.aixdzs.com/d/271/271523/'
     x = HtmlParser(url_src)
-    # print(x.get_intro())
-    x.get_test()
-    # print(x.get_title())
-    # print(x.get_author())
-    # print(x.get_chapter_info())
+    print(x.get_intro())
+    print(x.get_author())
+    print(x.get_title())
 
+    # Create epub class
+    y = Epub(title=x.get_title(), author=x.get_author(), identifier='id123456')
 
-    # y = Epub(title=x.get_title(), author=x.get_author(), identifier='id123456')    
-    # counter = 1
-    # chapter_list = []
-    # for i in x.get_chapter_info(5):
-    #     chapter_list.append(y.add_chapter(i[1], 'page'+str(counter)))
-    #     counter += 1
-    # y.create_toc('myname',chapter_list)
-    # y.export_epub('test_book_0130')
+    # Add introduction page
+    chapter_list = [y.add_chapter('大綱', x.get_intro, 'introduction.xhtml')]
+
+    # Add chapter
+    for index, i in enumerate(x.get_chapter_info(1)):
+        chapter_list.append(y.add_chapter(chapter_title= i[0], content=i[1] , epub_url='page'+str(index))) #[title, content, url]
+    
+    # Create table of content
+    y.create_toc(chapter_list)
+
+    # Export epub
+    y.export_epub('test_book_0131')
