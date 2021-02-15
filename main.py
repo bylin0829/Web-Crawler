@@ -124,7 +124,7 @@ class Epub:
         output_folder = os.path.join(os.path.dirname(__file__), "output")
         output_file = os.path.join(output_folder, book_name+'.epub')
         try:
-            mkdir(output_folder)            
+            os.mkdir(output_folder)            
         except:
             pass
         epub.write_epub(output_file, self.book, {})
@@ -159,3 +159,4 @@ if __name__=='__main__':
 
         # Export epub
         y.export_epub(x.get_title())
+    os.system("pause")
