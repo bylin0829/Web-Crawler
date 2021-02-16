@@ -133,30 +133,34 @@ class Epub:
 
 if __name__=='__main__':
     # url_src='https://tw.aixdzs.com/d/271/271523/'
-    url_src=input('請輸入愛下電子書網址\n範例: https://tw.aixdzs.com/d/264/264211/ \n您的輸入: ')
-    x=HtmlParser(url_src)
-    x.get_book_info()
-    
-    # Create epub class
-    y=Epub(title=x.get_title(), author=x.get_author(), identifier='id123456')
+    user_status = 'y'
+    while str(user_status).lower() == 'yes' or str(user_status).lower() == 'y':
+        print('=====開始=====')
+        url_src=input('請輸入愛下電子書網址\n範例: https://tw.aixdzs.com/d/264/264211/ \n您的輸入: ')
+        try:
+            x=HtmlParser(url_src)
+            x.get_book_info()
+            
+            # Create epub class
+            y=Epub(title=x.get_title(), author=x.get_author(), identifier='id123456')
 
-    # Add introduction page
-    chapter_list=[]
-    chapter_list.append(y.add_chapter('書籍資訊', '<h2>書籍資訊</h2>'+str(x.get_book_info()), 'book_info.xhtml'))
-    chapter_list.append(y.add_chapter('大綱', '<h2>大綱</h2>'+str(x.get_intro()), 'introduction.xhtml'))
+            # Add introduction page
+            chapter_list=[]
+            chapter_list.append(y.add_chapter('書籍資訊', '<h2>書籍資訊</h2>'+str(x.get_book_info()), 'book_info.xhtml'))
+            chapter_list.append(y.add_chapter('大綱', '<h2>大綱</h2>'+str(x.get_intro()), 'introduction.xhtml'))
 
-    # Add chapter
-    for index, i in enumerate(x.export_chapter_info()):
-        test_content=str(i[1])
-        header='<h1>{0}</h1>'.format(i[0])
-        chapter_list.append(y.add_chapter(chapter_title= i[0], contents=header + test_content, epub_url='page'+str(index))) #[title, content, url]
-    
-    if len(chapter_list) <= 2:
-        print("無文章或使用者終止")
-    else:
-        # Create table of content
-        y.create_toc(chapter_list)
+            # Add chapter
+            for index, i in enumerate(x.export_chapter_info()):
+                test_content=str(i[1])
+                header='<h1>{0}</h1>'.format(i[0])
+                chapter_list.append(y.add_chapter(chapter_title= i[0], contents=header + test_content, epub_url='page'+str(index))) #[title, content, url]
+            # Create table of content
+            y.create_toc(chapter_list)
 
-        # Export epub
-        y.export_epub(x.get_title())
+            # Export epub
+            y.export_epub(x.get_title())
+        except:
+            print("無文章或使用者終止")
+            
+        user_status = input("是否要繼續製作下一本電子書?(輸入yes或no):")
     os.system("pause")
