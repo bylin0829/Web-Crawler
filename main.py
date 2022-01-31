@@ -15,10 +15,10 @@ class HtmlParser:
 
     def get_title(self):
         title=self.soup.title.get_text()
-        x=title.find('txt')
+        x=title.split('_')
         if x == -1:
             x=0
-        return str(title[:x])
+        return str(x[0])
 
     def get_author(self):
         x=self.soup.find_all('span')
@@ -59,9 +59,9 @@ class HtmlParser:
                 temp=[]
                 print('Export:' + x.find("a").get_text())
                 temp.append(x.find("a").get_text()) # get all of chapter name
-                response=requests.get(self.url_chapter+x.find("a").get("href"))
+                response=requests.get('https://tw.ixdzs.com' + x.find("a").get("href"))
                 subweb=BeautifulSoup(response.text, "html.parser")
-                temp.append(subweb.find("div", class_="content")) # get all of content
+                temp.append(subweb.find('div', class_='content')) # get all of content
                 temp.append(self.url_chapter+x.find("a").get("href")) # get all of links
                 self.chapter_info_list.append(temp) # collect all of information into list
         return self.chapter_info_list #[title, content, url]
