@@ -1,11 +1,12 @@
 from hashlib import new
+from sys import excepthook
 from unittest.result import failfast
 import requests
 from bs4 import BeautifulSoup
 from ebooklib import epub
 import unicodedata
 import os.path
-
+import time
 from ebooklib import epub
 
 class my_epub:
@@ -93,21 +94,32 @@ if __name__=='__main__':
     mybook.outline(input('大綱:'))
 
     failure = []
-    for index in range(788):
+    url_root = 'https://m.shg.tw'
+    url_next = '/246482/2593840.html'
+    stop_condition = '/246482/'
+    index = 1
+    while True:
         try:
-            url_chapter = "https://www.twfanti.com/ZhuoYuAn/read_{index}.html".format(index=index+1)
+            url_chapter = url_root + url_next
             print('Export: {url}'.format(url=url_chapter))
             response=requests.get(url_chapter)
             soup=BeautifulSoup(response.text, "html.parser")
-            title = soup.find_all("h1", class_="lh100 size26 mb20")[0].text[4:]
-            contents = soup.find_all('p')
-            new_content = ''
-            for i in contents:
-                new_content += str(i)
-            mybook.build_page(title, str(index+1) , new_content)
+            chapter_title = soup.find_all("h1", class_="headline")[0].text
+            contents = soup.find_all('div', class_='content')[0].text
+            # new_content = ''
+            # for i in contents:
+            #     new_content += str(i)
+            mybook.build_page(chapter_title, str(index) , contents)
+            url_next = soup.find_all('a')[22].attrs['href']
+            if url_next == stop_condition:
+                raise KeyboardInterrupt
+        except KeyboardInterrupt:
+            break
         except Exception as e:
-            failure.append(index+1)
+            failure.append(index)
             print('Exception')
+        finally:
+            index += 1
     print('Failure index:{failure}'.format(failure=failure))
     mybook.create_directory()
     mybook.export()
