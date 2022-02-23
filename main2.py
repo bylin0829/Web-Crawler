@@ -97,11 +97,11 @@ if __name__ == '__main__':
     mybook.title = input('書名:')
     mybook.author = input('作者:')
     mybook.outline(input('大綱:'))
-
+    page2_condition = '_'
     failure = []
-    url_root = 'https://www.wfxs.com.tw'
-    url_next = '/chapter/30017/13911549.html'
-    stop_condition = '/30017/'
+    url_root = ''
+    url_next = 'https://www.fdxsg.com/content/539836/38606.html'
+    stop_condition = 'https://www.fdxsg.com/shuo/539836.html'
     index = 1
     mycontents = ''
     while True:
@@ -111,21 +111,27 @@ if __name__ == '__main__':
             response = requests.get(url_chapter)
             soup = BeautifulSoup(response.text, "html.parser")
             chapter_title = soup.find_all(
-                "h1", class_="pt10")[0].text
+                "h1")[0].text
+            chap_idx = chapter_title.find('皇叔擋道：淘寶醫妃休想逃 ')
+            if chap_idx > -1:
+                chapter_title = chapter_title.replace('皇叔擋道：淘寶醫妃休想逃 ', '')
             print(chapter_title)
+
             contents = soup.find_all(
-                'div', class_='readcontent')[0].text.replace('↑返回頂部↑', '')
+                'div', class_='content')[0].text
+            idx = contents.find('【滴滴滴，淘寶系統正式開啓')
+            if idx > -1:
+                contents = contents[:idx]
+
             try:
-                url_next = soup.find_all(
-                    'a', class_='btn btn-default')[2].attrs['href']
+                url_next = soup.find_all('a', string="下一頁")[0].attrs['href']
             except Exception as e:
-                url_next = soup.find_all(
-                    'a', class_='btn btn-default')[1].attrs['href']
-            idx = chapter_title.find('）')
+                url_next = soup.find_all('a', string="下一章")[0].attrs['href']
+                print('下一章')
             mycontents += contents
-            if url_next.find('_') == -1:
+            if url_next.find(page2_condition) == -1:
                 mybook.build_page(
-                    chapter_title[:chapter_title.find('（')], str(index), contents)
+                    chapter_title, str(index), contents)
                 mycontents = ''
                 index += 1
             if url_next == stop_condition:
