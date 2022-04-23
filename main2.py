@@ -37,11 +37,13 @@ class my_epub:
     def author(self, content=''):
         self._author = content
         self.book.add_author(self._author)
-        # book.add_author('Danko Bananko', file_as='Gospodin Danko Bananko', role='ill', uid='coauthor')
 
+    @property
+    def outline(self):
+        pass
+
+    @outline.setter
     def outline(self, content=''):
-        # self._directory.append(y.add_chapter('書籍資訊', '<h2>書籍資訊</h2>'+str(x.get_book_info()), 'book_info.xhtml'))
-        # self._directory.append(y.add_chapter('大綱', '<h2>大綱</h2>'+content, 'introduction.xhtml'))
         self.build_page('大綱', 'outline', '<h2>大綱</h2>' + content)
 
     def build_page(self, title='', file_name='', content=''):
@@ -51,16 +53,16 @@ class my_epub:
         c1.content = u'<h1>{title}</h1><p>{content}</p>'.format(
             title=title, content=content)
         # add chapter
-        if file_name != 'outline':
-            self.book.add_item(c1)
-            self._directory.append(c1)
+        # if file_name != 'outline':
+        self.book.add_item(c1)
+        self._directory.append(c1)
         return c1
 
     def create_directory(self):
         # define Table Of Contents
         self.book.toc = (epub.Link('outline.xhtml', '大綱', 'intro'),
-                         (epub.Section('本文'),
-                         (tuple(self._directory)))
+                         (epub.Section('章節'),
+                         (tuple(self._directory[1:])))
                          )
 
     def export(self):
@@ -93,54 +95,88 @@ class my_epub:
 
 
 if __name__ == '__main__':
+    DEBUG = False
     mybook = my_epub()
     mybook.title = input('書名:')
     mybook.author = input('作者:')
-    mybook.outline(input('大綱:'))
-    page2_condition = '_'
+    mybook.outline = input('大綱:')
+
     failure = []
     url_root = ''
-    url_next = 'https://www.fdxsg.com/content/539836/38606.html'
-    stop_condition = 'https://www.fdxsg.com/shuo/539836.html'
-    index = 1
-    mycontents = ''
+    url_next = 'https://m.23tr.com/book/314923/42449891.html'
+    stop_condition = 'https://m.23tr.com/modules/article/lastchapter.php?aid=314923&dynamic=1&acode=changnvjinghua'
+    next_page_condition = '_' #combine content if the link includes this word
+    chapter_index = 1
+    full_content = ''
+    
     while True:
         try:
+            # Import html information by bs4
             url_chapter = url_root + url_next
-            print('Export: {url}'.format(url=url_chapter))
-            response = requests.get(url_chapter)
+            headers = {'User-Agent': 'Mozilla/5.0'}
+
+            response = requests.get(url_chapter, headers=headers)
             soup = BeautifulSoup(response.text, "html.parser")
-            chapter_title = soup.find_all(
-                "h1")[0].text
-            chap_idx = chapter_title.find('皇叔擋道：淘寶醫妃休想逃 ')
-            if chap_idx > -1:
-                chapter_title = chapter_title.replace('皇叔擋道：淘寶醫妃休想逃 ', '')
-            print(chapter_title)
+            print('Export: {url}'.format(url=url_chapter))
 
-            contents = soup.find_all(
-                'div', class_='content')[0].text
-            idx = contents.find('【滴滴滴，淘寶系統正式開啓')
-            if idx > -1:
-                contents = contents[:idx]
+            # Find title and remove useless words
+            title_tag = 'div'
+            title_class = 'atitle'
+            title_useless_words = ''
+            title = soup.find_all(title_tag, class_ = title_class)[0].text
+            # method 1
+            # title = title.replace(title_useless_words, '')
+            # method 2
+            # title_useless_words_idx = title.find(title_useless_words)
+            # if title_useless_words_idx > -1:
+            #     title = title[:title_useless_words_idx]
 
+            print(title)
+
+            # Filter content for useless words
+            content_tag = 'div'
+            content_class = 'acontent'
+            content_useless_words = 'class="Readarea ReadAjax_tent">  '
+            content = soup.find_all(name=content_tag , class_=content_class)[0].text
+
+            #method 1
+            content = content.replace(content_useless_words, '')
+            content = content.replace(' ', '')
+            
+            #Find next page or chapter link
+            next_tag = 'a'
+            next_class = 'btn btn-default'
+            next_button_idx = 2
+            #method 1
+            # url_next = soup.find_all(name=next_tag, class_ = next_class)[next_button_idx].attrs['href']
+            #method 2
             try:
-                url_next = soup.find_all('a', string="下一頁")[0].attrs['href']
+                url_next = soup.find_all(name=next_tag, string="下一頁")[0].attrs['href']
+                print('Next連結為下一頁')
             except Exception as e:
-                url_next = soup.find_all('a', string="下一章")[0].attrs['href']
-                print('下一章')
-            mycontents += contents
-            if url_next.find(page2_condition) == -1:
-                mybook.build_page(
-                    chapter_title, str(index), contents)
-                mycontents = ''
-                index += 1
+                url_next = soup.find_all(name=next_tag, string="下一章")[0].attrs['href']
+                print('Next連結為下一章')
+
+            # Check contents finished or not
+            full_content += content
+            if url_next.find(next_page_condition) == -1:
+                mybook.build_page(title, str(chapter_index), full_content)
+                if DEBUG == True:
+                    print(full_content)
+                    print('Debug mode')
+                    raise KeyboardInterrupt
+                full_content = ''
+                chapter_index += 1
             if url_next == stop_condition:
                 raise KeyboardInterrupt
         except KeyboardInterrupt:
             break
         except Exception as e:
-            failure.append(index)
+            failure.append(chapter_index)
             print('Exception')
+            if len(failure) > 10:
+                break
+
     print('Failure index:{failure}'.format(failure=failure))
     mybook.create_directory()
     mybook.export()
