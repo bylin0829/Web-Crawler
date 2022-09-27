@@ -4,6 +4,7 @@ from ebooklib import epub
 import os.path
 from hashlib import md5
 from time import time
+from opencc import OpenCC
 
 
 class my_epub:
@@ -102,13 +103,14 @@ if __name__ == '__main__':
     mybook.outline = input('大綱:')
 
     failure = []
-    url_root = ''
-    url_next = 'https://m.23tr.com/book/314923/42449891.html'
-    stop_condition = 'https://m.23tr.com/modules/article/lastchapter.php?aid=314923&dynamic=1&acode=changnvjinghua'
-    next_page_condition = '_' #combine content if the link includes this word
+    url_root = 'https://www.dizishu.com'
+    url_next = '/b/21107/18786644.html'
+    stop_condition = '/b/21107/'
+    next_page_condition = '_p'  # combine content if the link includes this word
     chapter_index = 1
     full_content = ''
-    
+    cc = OpenCC('s2tw')
+
     while True:
         try:
             # Import html information by bs4
@@ -120,41 +122,52 @@ if __name__ == '__main__':
             print('Export: {url}'.format(url=url_chapter))
 
             # Find title and remove useless words
-            title_tag = 'div'
-            title_class = 'atitle'
+            title_tag = 'h1'
+            title_class = 'chaptername'
             title_useless_words = ''
-            title = soup.find_all(title_tag, class_ = title_class)[0].text
+            title = soup.find_all(title_tag, class_=title_class)[0].text
             # method 1
-            # title = title.replace(title_useless_words, '')
+            title = title.replace(title_useless_words, '')
             # method 2
             # title_useless_words_idx = title.find(title_useless_words)
             # if title_useless_words_idx > -1:
             #     title = title[:title_useless_words_idx]
 
+            title = cc.convert(title)
             print(title)
 
             # Filter content for useless words
             content_tag = 'div'
-            content_class = 'acontent'
-            content_useless_words = 'class="Readarea ReadAjax_tent">  '
-            content = soup.find_all(name=content_tag , class_=content_class)[0].text
+            content_class = 'txt'
+            content_useless_words = '『如果章节错误，点此举报』'
+            test = soup.find_all(
+                name=content_tag, class_=content_class)[0]
+            content = soup.find_all(
+                name=content_tag, class_=content_class)[0].text
 
-            #method 1
+            # method 1
             content = content.replace(content_useless_words, '')
             content = content.replace(' ', '')
-            
-            #Find next page or chapter link
+            # method 2
+            # content_useless_words_idx = content.find(content_useless_words)
+            # if content_useless_words_idx > -1:
+            #     content = content[:content_useless_words_idx]
+            content = cc.convert(content)
+
+            # Find next page or chapter link
             next_tag = 'a'
-            next_class = 'btn btn-default'
+            next_class = 'url_next'
             next_button_idx = 2
-            #method 1
+            # method 1
             # url_next = soup.find_all(name=next_tag, class_ = next_class)[next_button_idx].attrs['href']
-            #method 2
+            # method 2
             try:
-                url_next = soup.find_all(name=next_tag, string="下一頁")[0].attrs['href']
+                url_next = soup.find_all(name=next_tag, string="下一頁")[
+                    0].attrs['href']
                 print('Next連結為下一頁')
             except Exception as e:
-                url_next = soup.find_all(name=next_tag, string="下一章")[0].attrs['href']
+                url_next = soup.find_all(name=next_tag, string="下一章")[
+                    0].attrs['href']
                 print('Next連結為下一章')
 
             # Check contents finished or not
