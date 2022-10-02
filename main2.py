@@ -62,7 +62,7 @@ class my_epub:
     def create_directory(self):
         # define Table Of Contents
         self.book.toc = (epub.Link('outline.xhtml', '大綱', 'intro'),
-                         (epub.Section('章節'),
+                         (epub.Section('�?�?'),
                          (tuple(self._directory[1:])))
                          )
 
@@ -91,35 +91,35 @@ class my_epub:
         except:
             pass
         epub.write_epub(output_file, self.book, {})
-        print('輸出路徑: ' + output_file)
+        print('Output file: ' + output_file)
         print('Done')
 
 
-if __name__ == '__main__':
+def books_build_flow(book_name, book_url, author, outline):
     DEBUG = False
     mybook = my_epub()
-    mybook.title = input('書名:')
-    # mybook.author = input('作者:')
-    mybook.author = '倪匡'
-    mybook.outline = input('大綱:')
+    cc = OpenCC('s2tw')
+    mybook.title = book_name
+    mybook.author = author
+    outline = outline.replace('\r\n', '<br>')
+    mybook.outline = cc.convert(outline)
 
     failure = []
-    url_root = 'https://www.xuges.com/kh/nk/fy/index.htm'
+    url_root = book_url
     url_root = url_root.replace('index.htm', '')
 
-    url_next = '00.htm'
+    url_next = '01.htm'
     stop_condition = 'index.htm'
     next_page_condition = ''  # combine content if the link includes this word
     chapter_index = 1
     full_content = ''
-    cc = OpenCC('s2tw')
 
     while True:
         try:
             # Import html information by bs4
             url_chapter = url_root + url_next
-            headers = {'User-Agent': 'Mozilla/5.0'}
 
+            headers = {'User-Agent': 'Mozilla/5.0'}
             response = requests.get(url_chapter, headers=headers)
             response.encoding = 'gb2312'
             soup = BeautifulSoup(response.text, "html.parser")
@@ -152,7 +152,7 @@ if __name__ == '__main__':
             # method 1
             content = content.replace(
                 content_useless_words, content_replace_to)
-            # content = content.replace(' ', '')
+            # content = content.replace('???', '')
             # method 2
             # content_useless_words_idx = content.find(content_useless_words)
             # if content_useless_words_idx > -1:
@@ -170,11 +170,11 @@ if __name__ == '__main__':
             try:
                 url_next = soup.find_all(name=next_tag, string="下一页")[
                     0].attrs['href']
-                print('Next連結為下一頁')
+                # print('下一頁')
             except Exception as e:
                 url_next = soup.find_all(name=next_tag, string="下一章")[
                     0].attrs['href']
-                print('Next連結為下一章')
+                # print('下一章')
 
             # Check contents finished or not
             full_content += content
@@ -195,9 +195,44 @@ if __name__ == '__main__':
         except Exception as e:
             failure.append(chapter_index)
             print('Exception')
-            if len(failure) > 10:
+            if len(failure) > 5:
                 break
 
     print('Failure index:{failure}'.format(failure=failure))
     mybook.create_directory()
     mybook.export()
+
+
+if __name__ == '__main__':
+    headers = {'User-Agent': 'Mozilla/5.0'}
+
+    # Get outline
+
+    books = [
+        ['木蘭花系列53-電網火花', 'https://www.xuges.com/kh/nk/a53/index.htm', '倪匡'],
+        ['木蘭花系列54-古屋奇影', 'https://www.xuges.com/kh/nk/a54/index.htm', '倪匡'],
+        ['木蘭花系列55-金廟奇佛', 'https://www.xuges.com/kh/nk/a55/index.htm', '倪匡'],
+        ['木蘭花系列56-天才白痴', 'https://www.xuges.com/kh/nk/a56/index.htm', '倪匡'],
+        ['木蘭花系列57-生命合同', 'https://www.xuges.com/kh/nk/a57/index.htm', '倪匡'],
+        ['木蘭花系列58-三尸同行', 'https://www.xuges.com/kh/nk/a58/index.htm', '倪匡'],
+        ['木蘭花系列59-無風自動', 'https://www.xuges.com/kh/nk/a59/index.htm', '倪匡'],
+        ['木蘭花系列60-無名怪屍', 'https://www.xuges.com/kh/nk/a60/index.htm', '倪匡'],
+        ['浪子高達系列1-微晶之秘', 'https://www.xuges.com/kh/nk/wjzm/index.htm', '倪匡'],
+        ['浪子高達系列2-超腦終極戰', 'https://www.xuges.com/kh/nk/cnzj/index.htm', '倪匡'],
+        ['浪子高達系列3-血美人', 'https://www.xuges.com/kh/nk/xmr/index.htm', '倪匡']
+
+
+    ]
+    for i in books:
+        response = requests.get(i[1], headers=headers)
+        response.encoding = 'gb2312'
+        soup = BeautifulSoup(response.text, "html.parser")
+        print('Export: {url}'.format(url=i[1]))
+        try:
+            outline = soup.find_all('td', class_='zhj')[0].text
+        except:
+            outline = ''
+        # outline = outline.replace()
+        # print(outline)
+        books_build_flow(book_name=i[0], book_url=i[1],
+                         author=i[2], outline=outline)
